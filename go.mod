@@ -5,6 +5,7 @@ go 1.13
 require (
 	cloud.google.com/go/firestore v1.1.0
 	google.golang.org/api v0.13.0
+	kilobit.ca/go/args v0.0.5 // indirect
 	kilobit.ca/go/stored v0.0.1
 	kilobit.ca/go/tested v0.0.3
 )
