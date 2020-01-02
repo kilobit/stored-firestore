@@ -6,6 +6,8 @@ import "fmt"
 import "io"
 import "os"
 import "kilobit.ca/go/args"
+import "bufio"
+import "encoding/json"
 
 import . "kilobit.ca/go/stored"
 import . "stored-firestore"
@@ -23,7 +25,7 @@ Commands:
 
 help    Print this usage message.
 get ID  Get the document referred to by ID.
-put ID  Put the contents of stdin to the document referred to by
+set ID  Set the contents of stdin to the document referred to by
         ID.
 
 Project Name:
@@ -44,7 +46,7 @@ GOOGLE_APPLICATION_CREDENTIALS environment appropriately.
 func getGlobalOpts(ap *args.ArgParser) map[string]string {
 
 	opts := map[string]string{}
-	
+
 	for {
 		opt := ap.NextOpt()
 
@@ -52,7 +54,7 @@ func getGlobalOpts(ap *args.ArgParser) map[string]string {
 			break
 		}
 
-		switch(opt) {
+		switch opt {
 		case "p", "project":
 			opts["project"] = ap.NextArg()
 
@@ -103,8 +105,33 @@ func get(store Store, id ID, w io.Writer) int {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
-	
+
 	_, err = fmt.Fprintln(w, obj)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+
+	return 0
+}
+
+func set(store Store, id ID, r io.Reader) int {
+
+	br := bufio.NewReader(r)
+	bs, err := br.ReadBytes('\000')
+	if err != io.EOF {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+
+	var obj interface{}
+	err = json.Unmarshal(bs, &obj)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+
+	err = store.StoreItem(id, &obj)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
@@ -123,18 +150,24 @@ func main() {
 
 	cmd := ap.NextArg()
 
-	switch(cmd) {
+	switch cmd {
+
+	case "set":
+		id := (ID)(ap.NextArg())
+		store := NewFireStore(project, nil, nil)
+		code := set(store, id, os.Stdin)
+		os.Exit(code)
 
 	case "get":
 		id := (ID)(ap.NextArg())
 		store := NewFireStore(project, nil, nil)
 		code := get(store, id, os.Stdout)
 		os.Exit(code)
-		
+
 	case "help":
 		help(os.Stdout)
 		os.Exit(0)
-		
+
 	default:
 		fmt.Fprintln(os.Stderr, "Unrecognized command, ", cmd)
 		os.Exit(1)
