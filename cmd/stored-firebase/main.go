@@ -108,7 +108,13 @@ func get(store Store, id ID, w io.Writer) int {
 		return 1
 	}
 
-	_, err = fmt.Fprintln(w, obj)
+	bs, err := json.Marshal(obj)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	
+	_, err = fmt.Fprintf(w, "%s\n", bs)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
