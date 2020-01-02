@@ -24,6 +24,8 @@ Options:
 Commands:
 
 help    Print this usage message.
+
+del ID  Delete the document referred to by ID.
 get ID  Get the document referred to by ID.
 set ID  Set the contents of stdin to the document referred to by
         ID.
@@ -115,6 +117,10 @@ func get(store Store, id ID, w io.Writer) int {
 	return 0
 }
 
+// Set the document with the specified id and write it to the store.
+//
+// Returns an appropriate exit code.
+//
 func set(store Store, id ID, r io.Reader) int {
 
 	br := bufio.NewReader(r)
@@ -140,6 +146,21 @@ func set(store Store, id ID, r io.Reader) int {
 	return 0
 }
 
+// Delete the document with the given ID from the store.
+//
+// Returns an appropriate exit code.
+//
+func del(store Store, id ID) int {
+	
+	err := store.Delete(id)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+
+	return 0
+}
+
 func main() {
 
 	ap := args.NewArgParser(os.Args[1:])
@@ -151,6 +172,12 @@ func main() {
 	cmd := ap.NextArg()
 
 	switch cmd {
+
+	case "del", "delete":
+		id := (ID)(ap.NextArg())
+		store := NewFireStore(project, nil, nil)
+		code := del(store, id)
+		os.Exit(code)
 
 	case "set":
 		id := (ID)(ap.NextArg())

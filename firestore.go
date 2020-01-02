@@ -103,5 +103,13 @@ func (fs *FireStore) Apply(f ItemHandler) error {
 
 func (fs *FireStore) Delete(id ID) error {
 
-	return nil
+	err := fs.connect()
+	if err != nil {
+		return err
+	}
+
+	dr := fs.client.Doc((string)(id))
+	_, err = dr.Delete(ctx.TODO())
+	
+	return err 
 }

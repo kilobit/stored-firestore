@@ -67,4 +67,12 @@ func TestFireStoreStoreAndRetrieve(t *testing.T) {
 		
 		assert.ExpectDeep(t, data, obj)
 	}
+
+	for id, _ := range SNRData {
+
+		err := fs.Delete(id)
+		if err != nil {
+			t.Error(err)
+		}
+	}
 }
