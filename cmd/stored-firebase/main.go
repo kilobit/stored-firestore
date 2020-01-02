@@ -151,7 +151,7 @@ func set(store Store, id ID, r io.Reader) int {
 // Returns an appropriate exit code.
 //
 func del(store Store, id ID) int {
-	
+
 	err := store.Delete(id)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)

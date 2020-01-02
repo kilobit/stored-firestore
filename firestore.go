@@ -5,6 +5,7 @@ package firestore // import "kilobit.ca/go/stored-firestore"
 import ctx "context"
 import . "kilobit.ca/go/stored"
 import gfs "cloud.google.com/go/firestore"
+
 //import "google.golang.org/api/iterator"
 import "google.golang.org/api/option"
 
@@ -19,31 +20,31 @@ type UnMarshaler interface {
 }
 
 type FireStore struct {
-	project string  // Name of the GCP project
-	client *gfs.Client // Client connection
+	project     string                // Name of the GCP project
+	client      *gfs.Client           // Client connection
 	client_opts []option.ClientOption // Client options
-	m Marshaler // Prepare Storables
-	u UnMarshaler // Reconstitute Storables
+	m           Marshaler             // Prepare Storables
+	u           UnMarshaler           // Reconstitute Storables
 }
 
 func NewFireStore(project string, m Marshaler,
-	u UnMarshaler, opts... Option) *FireStore {
+	u UnMarshaler, opts ...Option) *FireStore {
 
 	fs := &FireStore{project, nil, []option.ClientOption{}, m, u}
-	
+
 	fs.Options(opts...)
 
 	return fs
 }
 
-func (fs *FireStore) Options(opts... Option) {
+func (fs *FireStore) Options(opts ...Option) {
 	for _, opt := range opts {
 		opt(fs)
 	}
 }
 
 func (fs *FireStore) connect() error {
-	if(fs.client != nil) {
+	if fs.client != nil {
 		return nil
 	}
 
@@ -53,7 +54,7 @@ func (fs *FireStore) connect() error {
 		fs.client_opts...)
 
 	fs.client = c
-	
+
 	return err
 }
 
@@ -71,7 +72,7 @@ func (fs *FireStore) StoreItem(id ID, obj Storable) error {
 
 	dr := fs.client.Doc((string)(id))
 	_, err = dr.Set(ctx.TODO(), obj)
-	
+
 	return err
 }
 
@@ -87,7 +88,7 @@ func (fs *FireStore) Retrieve(id ID) (Storable, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return ds.Data(), nil
 }
 
@@ -110,6 +111,6 @@ func (fs *FireStore) Delete(id ID) error {
 
 	dr := fs.client.Doc((string)(id))
 	_, err = dr.Delete(ctx.TODO())
-	
-	return err 
+
+	return err
 }

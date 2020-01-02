@@ -14,12 +14,12 @@ func TestFireStoreTest(t *testing.T) {
 }
 
 func newTestFireStore(t *testing.T) *FireStore {
-	
+
 	project, ok := os.LookupEnv(PROJECT_ENV_NAME)
 	if !ok {
 		t.Skip(PROJECT_ENV_NAME + " environment variable not set.")
 	}
-	
+
 	fs := NewFireStore(project, nil, nil)
 
 	return fs
@@ -27,7 +27,7 @@ func newTestFireStore(t *testing.T) *FireStore {
 
 var SNRData map[ID]Storable = map[ID]Storable{
 	"testing/test1": map[string]interface{}{
-		"foo": "bar",
+		"foo":  "bar",
 		"bing": "bong",
 	},
 
@@ -39,18 +39,18 @@ var SNRData map[ID]Storable = map[ID]Storable{
 	},
 
 	"testing/test3": map[string]interface{}{
-		"foo": 42,
+		"foo":  42,
 		"bing": 43,
 	},
 }
 
 func TestFireStoreStoreAndRetrieve(t *testing.T) {
-	
+
 	fs := newTestFireStore(t)
 	defer fs.Close()
 
 	for id, data := range SNRData {
-		
+
 		err := fs.StoreItem(id, data)
 		if err != nil {
 			t.Errorf("%v\n%s", id, err)
@@ -64,7 +64,7 @@ func TestFireStoreStoreAndRetrieve(t *testing.T) {
 		// Useful for debugging.
 		// t.Logf("%#v", data)
 		// t.Logf("%#v", obj)
-		
+
 		assert.ExpectDeep(t, data, obj)
 	}
 
