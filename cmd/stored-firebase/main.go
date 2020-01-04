@@ -152,6 +152,29 @@ func set(store Store, id ID, r io.Reader) int {
 	return 0
 }
 
+func list(store Store, w io.Writer) int {
+
+	ids, err := store.List()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+
+	bs, err := json.Marshal(ids)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+
+	_, err = fmt.Fprintf(w, "%s\n", bs)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+
+	return 0
+}
+
 // Delete the document with the given ID from the store.
 //
 // Returns an appropriate exit code.
@@ -197,6 +220,11 @@ func main() {
 		code := get(store, id, os.Stdout)
 		os.Exit(code)
 
+	case "list":
+		store := NewFireStore(project, nil, nil)
+		code := list(store, os.Stdout)
+		os.Exit(code)
+		
 	case "help":
 		help(os.Stdout)
 		os.Exit(0)

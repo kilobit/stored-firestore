@@ -165,7 +165,13 @@ func (fs *FireStore) List() ([]ID, error) {
 		}
 
 		for _, doc := range docs {
-			ids = append(ids, fs.stripCollectionFromID((ID)(doc.ID)))
+			
+			id := doc.ID
+			if fs.collection == "" {
+				id = col.ID + "/" + id
+			}
+			
+			ids = append(ids, (ID)(id))
 		}
 	}
 
