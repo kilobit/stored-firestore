@@ -6,7 +6,6 @@ import . "kilobit.ca/go/stored"
 import "kilobit.ca/go/tested/assert"
 import "testing"
 import "os"
-import "strings"
 
 const PROJECT_ENV_NAME string = "GOOGLE_PROJECT_NAME"
 
@@ -21,25 +20,25 @@ func newTestFireStore(t *testing.T) *FireStore {
 		t.Skip(PROJECT_ENV_NAME + " environment variable not set.")
 	}
 
-	fs := NewFireStore(project, nil, nil)
+	fs := NewFireStore(project, nil, nil, OptCollection("testing-axyz7b"))
 
 	return fs
 }
 
 var SNRData map[ID]Storable = map[ID]Storable{
-	"testing/test1": map[string]interface{}{
+	"test1": map[string]interface{}{
 		"foo":  "bar",
 		"bing": "bong",
 	},
 
-	"testing/test2": map[string]interface{}{
+	"test2": map[string]interface{}{
 		"foo": 12,
 		"bing": map[string]interface{}{
 			"nested": true,
 		},
 	},
 
-	"testing/test3": map[string]interface{}{
+	"test3": map[string]interface{}{
 		"foo":  42,
 		"bing": 43,
 	},
@@ -72,10 +71,6 @@ func TestFireStoreStoreAndRetrieve(t *testing.T) {
 	for _, id := range ids {
 		_, ok := SNRData[id]
 		if !ok {
-			// Ignore non-testing entries.
-			if !strings.HasPrefix(string(id), "testing") {
-				continue
-			}
 			t.Errorf("Missing test data %s from ids.\n", id)
 		}
 	}
