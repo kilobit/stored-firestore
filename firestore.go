@@ -4,7 +4,8 @@ package firestore // import "kilobit.ca/go/stored-firestore"
 
 import ctx "context"
 import . "kilobit.ca/go/stored"
-import gfs "cloud.google.com/go/firestore"
+import "cloud.google.com/go/firestore"
+import "strings"
 
 //import "google.golang.org/api/iterator"
 import "google.golang.org/api/option"
@@ -21,16 +22,23 @@ type UnMarshaler interface {
 
 type FireStore struct {
 	project     string                // Name of the GCP project
-	client      *gfs.Client           // Client connection
+	client      *firestore.Client     // Client connection
 	client_opts []option.ClientOption // Client options
+	collection  string                // FS collection
 	m           Marshaler             // Prepare Storables
 	u           UnMarshaler           // Reconstitute Storables
+}
+
+func OptCollection(collection string) Option {
+	return func(fs *FireStore) {
+		fs.collection = collection
+	}
 }
 
 func NewFireStore(project string, m Marshaler,
 	u UnMarshaler, opts ...Option) *FireStore {
 
-	fs := &FireStore{project, nil, []option.ClientOption{}, m, u}
+	fs := &FireStore{project, nil, []option.ClientOption{}, "", m, u}
 
 	fs.Options(opts...)
 
@@ -48,7 +56,7 @@ func (fs *FireStore) connect() error {
 		return nil
 	}
 
-	c, err := gfs.NewClient(
+	c, err := firestore.NewClient(
 		ctx.TODO(),
 		fs.project,
 		fs.client_opts...)
@@ -56,6 +64,14 @@ func (fs *FireStore) connect() error {
 	fs.client = c
 
 	return err
+}
+
+func (fs *FireStore) setCollection(id ID) ID {
+	if fs.collection != "" {
+		id = (ID)(fs.collection + "/" + string(id))
+	}
+
+	return id
 }
 
 func (fs *FireStore) Close() {
@@ -70,6 +86,8 @@ func (fs *FireStore) StoreItem(id ID, obj Storable) error {
 		return err
 	}
 
+	id = fs.setCollection(id)
+
 	dr := fs.client.Doc((string)(id))
 	_, err = dr.Set(ctx.TODO(), obj)
 
@@ -83,6 +101,8 @@ func (fs *FireStore) Retrieve(id ID) (Storable, error) {
 		return nil, err
 	}
 
+	id = fs.setCollection(id)
+
 	dr := fs.client.Doc((string)(id))
 	ds, err := dr.Get(ctx.TODO())
 	if err != nil {
@@ -90,6 +110,36 @@ func (fs *FireStore) Retrieve(id ID) (Storable, error) {
 	}
 
 	return ds.Data(), nil
+}
+
+// If the FS collection is set, return a pointer to that CollectionRef
+// otherwise return pointers to all of the CollectionRefs in the FS.
+//
+func (fs *FireStore) listCollections() ([]*firestore.CollectionRef, error) {
+
+	err := fs.connect()
+	if err != nil {
+		return nil, err
+	}
+
+	if fs.collection != "" {
+		col := fs.client.Collection(fs.collection)
+		return []*firestore.CollectionRef{col}, nil
+	}
+
+	return fs.client.Collections(ctx.TODO()).GetAll()
+}
+
+// If the collection was specified for this Store, then it and the "/"
+// separator will be stripped from the ID.  Otherwise the ID will be
+// returned unchanged.
+//
+func (fs *FireStore) stripCollectionFromID(id ID) ID {
+	if fs.collection != "" {
+		id = (ID)(strings.TrimPrefix(string(id), fs.collection+"/"))
+	}
+
+	return id
 }
 
 // Currently lists ids for all documents in the entire store.
@@ -103,7 +153,7 @@ func (fs *FireStore) List() ([]ID, error) {
 		return nil, err
 	}
 
-	cols, err := fs.client.Collections(ctx.TODO()).GetAll()
+	cols, err := fs.listCollections()
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +165,7 @@ func (fs *FireStore) List() ([]ID, error) {
 		}
 
 		for _, doc := range docs {
-			ids = append(ids, (ID)(col.ID+"/"+doc.ID))
+			ids = append(ids, fs.stripCollectionFromID((ID)(doc.ID)))
 		}
 	}
 
@@ -133,6 +183,8 @@ func (fs *FireStore) Delete(id ID) error {
 	if err != nil {
 		return err
 	}
+
+	id = fs.setCollection(id)
 
 	dr := fs.client.Doc((string)(id))
 	_, err = dr.Delete(ctx.TODO())
