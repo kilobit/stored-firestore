@@ -92,9 +92,34 @@ func (fs *FireStore) Retrieve(id ID) (Storable, error) {
 	return ds.Data(), nil
 }
 
+// Currently lists ids for all documents in the entire store.
+//
 func (fs *FireStore) List() ([]ID, error) {
 
-	return []ID{}, nil
+	ids := []ID{}
+
+	err := fs.connect()
+	if err != nil {
+		return nil, err
+	}
+
+	cols, err := fs.client.Collections(ctx.TODO()).GetAll()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, col := range cols {
+		docs, err := col.DocumentRefs(ctx.TODO()).GetAll()
+		if err != nil {
+			return nil, err
+		}
+
+		for _, doc := range docs {
+			ids = append(ids, (ID)(col.ID+"/"+doc.ID))
+		}
+	}
+
+	return ids, nil
 }
 
 func (fs *FireStore) Apply(f ItemHandler) error {
