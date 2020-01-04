@@ -5,7 +5,6 @@ package firestore // import "kilobit.ca/go/stored-firestore"
 import ctx "context"
 import . "kilobit.ca/go/stored"
 import "cloud.google.com/go/firestore"
-import "strings"
 
 //import "google.golang.org/api/iterator"
 import "google.golang.org/api/option"
@@ -130,18 +129,6 @@ func (fs *FireStore) listCollections() ([]*firestore.CollectionRef, error) {
 	return fs.client.Collections(ctx.TODO()).GetAll()
 }
 
-// If the collection was specified for this Store, then it and the "/"
-// separator will be stripped from the ID.  Otherwise the ID will be
-// returned unchanged.
-//
-func (fs *FireStore) stripCollectionFromID(id ID) ID {
-	if fs.collection != "" {
-		id = (ID)(strings.TrimPrefix(string(id), fs.collection+"/"))
-	}
-
-	return id
-}
-
 // Currently lists ids for all documents in the entire store.
 //
 func (fs *FireStore) List() ([]ID, error) {
@@ -165,12 +152,12 @@ func (fs *FireStore) List() ([]ID, error) {
 		}
 
 		for _, doc := range docs {
-			
+
 			id := doc.ID
 			if fs.collection == "" {
 				id = col.ID + "/" + id
 			}
-			
+
 			ids = append(ids, (ID)(id))
 		}
 	}
