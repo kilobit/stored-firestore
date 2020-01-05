@@ -75,6 +75,22 @@ func TestFireStoreStoreAndRetrieve(t *testing.T) {
 		}
 	}
 
+	// Test Apply.
+	err = fs.Apply(func(id ID, obj Storable) error {
+		data, ok := SNRData[id]
+		if !ok {
+			t.Errorf("ID %s in Apply not associated to test data.", id)
+
+		}
+
+		assert.ExpectDeep(t, data, obj)
+
+		return nil
+	})
+	if err != nil {
+		t.Error(err)
+	}
+
 	// Retrieve and compare the test objects.
 	for id, data := range SNRData {
 		obj, err := fs.Retrieve(id)

@@ -167,6 +167,23 @@ func (fs *FireStore) List() ([]ID, error) {
 
 func (fs *FireStore) Apply(f ItemHandler) error {
 
+	ids, err := fs.List()
+	if err != nil {
+		return err
+	}
+
+	for _, id := range ids {
+		obj, err := fs.Retrieve(id)
+		if err != nil {
+			return err
+		}
+
+		err = f(id, obj)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
