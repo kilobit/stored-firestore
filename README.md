@@ -31,8 +31,13 @@ Domain(fs)
 Features
 --------
 
-- Store data in the GCP cloud.
+- Store data in the GCP cloud using Firestore.
 - Decoupled domain and storage logic.
+
+Upcoming:
+- Transactions.
+- Triggers.
+- Limit operations by Criterria.
 
 Installation
 ------------
@@ -66,6 +71,8 @@ License
 -------
 
 See LICENSE.
+
+Links to 3rd party content that may have it's own licensing.
 
 --  
 Created: Dec 17, 2019  
