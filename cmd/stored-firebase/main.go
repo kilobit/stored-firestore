@@ -57,6 +57,10 @@ func getGlobalOpts(ap *args.ArgParser) map[string]string {
 		}
 
 		switch opt {
+
+		case "c", "col", "coll", "collection":
+			opts["collection"] = ap.NextArg()
+
 		case "p", "project":
 			opts["project"] = ap.NextArg()
 
@@ -66,6 +70,21 @@ func getGlobalOpts(ap *args.ArgParser) map[string]string {
 	}
 
 	return opts
+}
+
+// Based on the given cli options return a set of relevant
+// []Store.Options.
+//
+func getStoreOpts(opts map[string]string) []Option {
+
+	storeOpts := []Option{}
+
+	collection, ok := opts["collection"]
+	if ok {
+		storeOpts = append(storeOpts, OptCollection(collection))
+	}
+
+	return storeOpts
 }
 
 // Looks for the GCP project name in the options.  Failing that it
@@ -113,7 +132,7 @@ func get(store Store, id ID, w io.Writer) int {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
-	
+
 	_, err = fmt.Fprintf(w, "%s\n", bs)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -196,6 +215,8 @@ func main() {
 
 	opts := getGlobalOpts(ap)
 
+	storeOpts := getStoreOpts(opts)
+
 	project := getProjectName(opts)
 
 	cmd := ap.NextArg()
@@ -204,27 +225,27 @@ func main() {
 
 	case "del", "delete":
 		id := (ID)(ap.NextArg())
-		store := NewFireStore(project, nil, nil)
+		store := NewFireStore(project, nil, nil, storeOpts...)
 		code := del(store, id)
 		os.Exit(code)
 
 	case "set":
 		id := (ID)(ap.NextArg())
-		store := NewFireStore(project, nil, nil)
+		store := NewFireStore(project, nil, nil, storeOpts...)
 		code := set(store, id, os.Stdin)
 		os.Exit(code)
 
 	case "get":
 		id := (ID)(ap.NextArg())
-		store := NewFireStore(project, nil, nil)
+		store := NewFireStore(project, nil, nil, storeOpts...)
 		code := get(store, id, os.Stdout)
 		os.Exit(code)
 
 	case "list":
-		store := NewFireStore(project, nil, nil)
+		store := NewFireStore(project, nil, nil, storeOpts...)
 		code := list(store, os.Stdout)
 		os.Exit(code)
-		
+
 	case "help":
 		help(os.Stdout)
 		os.Exit(0)
