@@ -11,12 +11,16 @@ import "google.golang.org/api/option"
 
 type Option func(*FireStore)
 
-type Marshaler interface {
-	Marshal(obj Storable) (interface{}, error)
+type Marshaler func(Storable) (interface{}, error)
+
+func nopMarshaler(obj Storable) (interface{}, error) {
+	return obj, nil
 }
 
-type UnMarshaler interface {
-	UnMarshal(obj interface{}) (Storable, error)
+type UnMarshaler func(interface{}) (Storable, error)
+
+func nopUnMarshaler(obj interface{}) (Storable, error) {
+	return obj, nil
 }
 
 type FireStore struct {
@@ -34,10 +38,28 @@ func OptCollection(collection string) Option {
 	}
 }
 
-func NewFireStore(project string, m Marshaler,
-	u UnMarshaler, opts ...Option) *FireStore {
+func OptMarshaler(m Marshaler) Option {
+	return func(fs *FireStore) {
+		fs.m = m
+	}
+}
 
-	fs := &FireStore{project, nil, []option.ClientOption{}, "", m, u}
+func OptUnMarshaler(u UnMarshaler) Option {
+	return func(fs *FireStore) {
+		fs.u = u
+	}
+}
+
+func NewFireStore(project string, opts ...Option) *FireStore {
+
+	fs := &FireStore{
+		project,
+		nil,
+		[]option.ClientOption{},
+		"",
+		nopMarshaler,
+		nopUnMarshaler,
+	}
 
 	fs.Options(opts...)
 
@@ -87,8 +109,13 @@ func (fs *FireStore) StoreItem(id ID, obj Storable) error {
 
 	id = fs.setCollection(id)
 
+	mobj, err := fs.m(obj)
+	if err != nil {
+		return err
+	}
+
 	dr := fs.client.Doc((string)(id))
-	_, err = dr.Set(ctx.TODO(), obj)
+	_, err = dr.Set(ctx.TODO(), mobj)
 
 	return err
 }
@@ -108,7 +135,12 @@ func (fs *FireStore) Retrieve(id ID) (Storable, error) {
 		return nil, err
 	}
 
-	return ds.Data(), nil
+	obj, err := fs.u(ds.Data())
+	if err != nil {
+		return nil, err
+	}
+
+	return obj, nil
 }
 
 // If the FS collection is set, return a pointer to that CollectionRef

@@ -20,7 +20,7 @@ func newTestFireStore(t *testing.T) *FireStore {
 		t.Skip(PROJECT_ENV_NAME + " environment variable not set.")
 	}
 
-	fs := NewFireStore(project, nil, nil, OptCollection("testing-axyz7b"))
+	fs := NewFireStore(project, OptCollection("testing-axyz7b"))
 
 	return fs
 }

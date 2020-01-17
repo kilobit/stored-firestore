@@ -1,4 +1,4 @@
-module stored-firestore
+module kilobit.ca/go/stored-firestore
 
 go 1.13
 

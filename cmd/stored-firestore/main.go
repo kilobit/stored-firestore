@@ -10,7 +10,7 @@ import "bufio"
 import "encoding/json"
 
 import . "kilobit.ca/go/stored"
-import . "stored-firestore"
+import . "kilobit.ca/go/stored-firestore"
 
 const PROJECT_ENV_NAME string = "GOOGLE_PROJECT_NAME"
 
@@ -225,24 +225,24 @@ func main() {
 
 	case "del", "delete":
 		id := (ID)(ap.NextArg())
-		store := NewFireStore(project, nil, nil, storeOpts...)
+		store := NewFireStore(project, storeOpts...)
 		code := del(store, id)
 		os.Exit(code)
 
 	case "set":
 		id := (ID)(ap.NextArg())
-		store := NewFireStore(project, nil, nil, storeOpts...)
+		store := NewFireStore(project, storeOpts...)
 		code := set(store, id, os.Stdin)
 		os.Exit(code)
 
 	case "get":
 		id := (ID)(ap.NextArg())
-		store := NewFireStore(project, nil, nil, storeOpts...)
+		store := NewFireStore(project, storeOpts...)
 		code := get(store, id, os.Stdout)
 		os.Exit(code)
 
 	case "list":
-		store := NewFireStore(project, nil, nil, storeOpts...)
+		store := NewFireStore(project, storeOpts...)
 		code := list(store, os.Stdout)
 		os.Exit(code)
 
